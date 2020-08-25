@@ -21,13 +21,13 @@ int2emotion = {
 
 # Todas emoções no EMO-DB
 emo_db = {
-    "W":"anger",
-    "L":"boredom",
-    "E":"disgust",
-    "A":"fear",
-    "F":"happiness",
-    "T":"sadness",
-    "N":"neutral"
+    "W":"W",
+    "L":"L",
+    "E":"E",
+    "A":"A",
+    "F":"F",
+    "T":"T",
+    "N":"N"
 }
 
 
@@ -41,13 +41,13 @@ AVAILABLE_EMOTIONS_RAVDESS = {
 
 # Emoções escolhidas para execução EMO-DB
 AVAILABLE_EMOTIONS_EMO = {
-    "anger",
-    "sadness",
-    "neutral",
-    "happiness",
-    "boredom",
-    "disgust",
-    "fear"
+    "W",
+    "S",
+    "N",
+    "F",
+    "L",
+    "E",
+    "A"
 }
 emotions = ["anger","sadness","neutral","boredom","disgust","fear","happiness"]
 
@@ -156,6 +156,7 @@ def confusionmatrix(model,X_test, y_test, percentage=True, labeled=True):
         y_pred = model.predict(X_test)
         matrix = confusion_matrix(y_test, y_pred, labels=emotions).astype(np.float32)
         #matrix = confusion_matrix().astype(np.float32)
+        print(matrix)
         if percentage:
             for i in range(len(matrix)):
                 matrix[i] = matrix[i] / np.sum(matrix[i])

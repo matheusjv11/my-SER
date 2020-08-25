@@ -5,6 +5,7 @@ para a execução do código
 
 from sklearn.neural_network import MLPClassifier
 
+
 def escolher_modelo(modelo):
     if modelo == "padrao":
         return padrao()
@@ -21,7 +22,7 @@ def padrao():
     'epsilon': 1e-08, 
     'hidden_layer_sizes': (300,), 
     'learning_rate': 'adaptive', 
-    'max_iter': 500, 
+    'max_iter': 1000,
     }
     # Inicia Multi Layer Perceptron classifier
     model = MLPClassifier(**model_params)
