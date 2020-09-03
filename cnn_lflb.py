@@ -1,15 +1,16 @@
 # 1D cnn for SER
 
-from keras.models import Model, Sequential
-from keras import optimizers
-from keras.layers import Input, Conv1D, BatchNormalization, MaxPooling1D, LSTM, Dense, Activation, Layer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Input, Conv1D, BatchNormalization, MaxPooling1D, LSTM, Dense, Activation, Layer
 from datasets import escolher_dataset
-from keras.utils import to_categorical, normalize
+from tensorflow.keras.utils import to_categorical, normalize
 import keras.backend as K
 import argparse
-from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
-from keras.models import load_model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.models import load_model
+import tensorflow as tf
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 import pandas as pd
@@ -17,11 +18,10 @@ import numpy
 
 
 def emo1d(input_shape, num_classes, args):
-    model = Sequential(name='Emo1D')
+    model = tf.keras.Sequential(name='Emo1D')
 
     # LFLB1
-    model.add(Conv1D(filters=64, kernel_size=(3), strides=1, padding='same',
-                     data_format='channels_last', input_shape=input_shape))
+    model.add(Conv1D(filters=64, kernel_size=(3), strides=1, padding='same', input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
     model.add(MaxPooling1D(pool_size=2, strides=2))
@@ -114,7 +114,7 @@ emotions = ['W', 'L', 'E', 'A', 'F', 'T', 'N']
 
 if __name__ == "__main__":
     import numpy as np
-    import matplotlib.pyplot as plt
+
 
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
@@ -127,13 +127,13 @@ if __name__ == "__main__":
     args.batch_size = 6
     # best model will be saved before number of epochs reach this value
     # args.num_epochs = 1500
-    args.num_epochs = 15
+    args.num_epochs = 300
     args.learning_rate = 0.0001
     args.decay = 1e-6
     args.momentum = 0.9
 
     # define model
-    model = emo1d(input_shape=x_tr.shape[1:], num_classes=len(np.unique(np.argmax(y_tr, 1))), args=args)
+    model = emo1d(input_shape=x_tr.shape[1:], num_classes=7, args=args)
 
     model.summary()
 
@@ -145,3 +145,10 @@ if __name__ == "__main__":
     # y_t = [numpy.argmax(y, axis=None, out=None) for y in y_t]
     # print(confusionmatrix(model, x_t, y_t))
 
+    predictions = model.predict(x_t, batch_size=10, verbose=0)
+    """for prediction in predictions:
+        print(prediction)"""
+    rounded_predictions = np.argmax(predictions, axis=1)
+    rounded_true = np.argmax(y_t, axis=1)
+    cm = confusion_matrix(y_true=rounded_true, y_pred=rounded_predictions)
+    print(cm)

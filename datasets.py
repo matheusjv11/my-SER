@@ -75,13 +75,14 @@ def extract_feature(file_name, **kwargs):
             stft = np.abs(librosa.stft(X))
         result = np.array([])
         if mfcc:
-            mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
+            mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128).T, axis=0)
             result = np.hstack((result, mfccs))
         if chroma:
             chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T,axis=0)
             result = np.hstack((result, chroma))
         if mel:
             mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
+            # mel = librosa.feature.melspectrogram(X, sr=sample_rate)
             result = np.hstack((result, mel))
         if contrast:
             contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T,axis=0)
@@ -106,7 +107,7 @@ def load_data_ravdess(test_size=0.2):
         if emotion not in AVAILABLE_EMOTIONS_RAVDESS:
             continue
         # extract speech features
-        features = extract_feature(file, mfcc=True, chroma=True, mel=True)
+        features = extract_feature(file, mfcc=True , chroma=False, mel=False)
         # add to data
         X.append(features)
         y.append(emotion)
@@ -126,7 +127,7 @@ def load_data_emo(test_size=0.2):
         if emotion not in AVAILABLE_EMOTIONS_EMO:
             continue
         # extract speech features
-        features = extract_feature(file, mfcc=True, chroma=True, mel=True)
+        features = extract_feature(file, mfcc=True, chroma=False, mel=False)
         # add to data
         X.append(features)
         y.append(emotion)
@@ -166,3 +167,5 @@ def confusionmatrix(model,X_test, y_test, percentage=True, labeled=True):
             matrix = pd.DataFrame(matrix, index=[ f"true_{e}" for e in emotions ],
                                     columns=[ f"predicted_{e}" for e in emotions ])
         return matrix
+
+x_tr, x_t, y_tr, y_t  = escolher_dataset("emo")
