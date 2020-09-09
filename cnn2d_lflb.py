@@ -61,7 +61,7 @@ def emo1d(input_shape, num_classes, args):
 
 def train(model, x_tr, y_tr, x_val, y_val, args):
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
-    mc = ModelCheckpoint('best_model.h5', monitor='val_categorical_accuracy',
+    mc = ModelCheckpoint('best_model_cnn2d.h5', monitor='val_categorical_accuracy',
                          mode='max', verbose=1, save_best_only=True)
     history = model.fit(x_tr, y_tr, epochs=args.num_epochs, batch_size=args.batch_size, validation_data=(x_val, y_val),
                         callbacks=[es, mc])
@@ -69,7 +69,7 @@ def train(model, x_tr, y_tr, x_val, y_val, args):
 
 
 def test(model, x_t, y_t):
-    saved_model = load_model('best_model.h5')
+    saved_model = load_model('best_model_cnn2d.h5')
     score = saved_model.evaluate(x_t, y_t, batch_size=20)
     print(score)
     return score
@@ -96,7 +96,7 @@ def string2num(y):
     return y1
 
 def loadData():
-    x_tr, x_t, y_tr, y_t = escolher_dataset('emo')
+    x_tr, x_t, y_tr, y_t = escolher_dataset('emo', '2d', 'mfcc')
 
     y_tr = string2num(y_tr)
     y_t = string2num(y_t)
@@ -133,6 +133,8 @@ if __name__ == "__main__":
     args.momentum = 0.9
 
     # define model
+    print(x_tr.shape[1:])
+    quit()
     model = emo1d(input_shape=x_tr.shape[1:], num_classes=7, args=args)
 
     model.summary()
