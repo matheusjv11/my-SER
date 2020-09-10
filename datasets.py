@@ -77,7 +77,7 @@ def extract_feature(file_name, **kwargs):
                 # O np mean é utilizado para transformar a matriz em vetor, tirando a media de cada linha
                 mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128).T, axis=0)
             else:
-                mfccs = librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128)
+                mfccs = librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128, )
 
             #result = np.hstack((result, mfccs))
             result = mfccs
@@ -159,4 +159,4 @@ def escolher_dataset(dataset, dimension, feature):
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mfcc")
+x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mel")
