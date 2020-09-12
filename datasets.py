@@ -51,7 +51,7 @@ AVAILABLE_EMOTIONS_EMO = {
 }
 emotions = ["anger","sadness","neutral","boredom","disgust","fear","happiness"]
 
-def extract_feature(file_name, **kwargs):
+def extract_feature_1d(file_name, **kwargs):
     """
     Extract feature from audio file `file_name`
         Features supported:
@@ -62,39 +62,44 @@ def extract_feature(file_name, **kwargs):
     """
     mfcc = kwargs.get("mfcc")
     mel = kwargs.get("mel")
-    dimension = kwargs.get("dimension")
 
     with soundfile.SoundFile(file_name) as sound_file:
         X = sound_file.read(dtype="float32")
         sample_rate = sound_file.samplerate
-        #result = np.array([])
-        #result = np.ndarray(shape=)
-        result = None
+        result = np.array([])
 
         if mfcc:
-            # Verifica a dimensão dos dados que serão retornados
-            if dimension == '1d':
-                # O np mean é utilizado para transformar a matriz em vetor, tirando a media de cada linha
-                mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128).T, axis=0)
-            else:
-                mfccs = librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128, )
+            # O np mean é utilizado para transformar a matriz em vetor, tirando a media de cada linha
+            mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128).T, axis=0)
 
-            #result = np.hstack((result, mfccs))
-            result = mfccs
+            result = np.hstack((result, mfccs))
+
         if mel:
-            # Verifica a dimensão dos dados que serão retornados
-            if dimension == '1d':
-                mel1d = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
-                mel = librosa.power_to_db(mel1d ** 2)
-            else:
-                mel2d = librosa.feature.melspectrogram(X, sr=sample_rate, n_fft=2048, hop_length=512)
-                mel = librosa.power_to_db(mel2d ** 2)
-            #result = np.hstack((result, mel))
-            result = mel
+            mel1d = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
+            mel = librosa.power_to_db(mel1d ** 2)
+
+            result = np.hstack((result, mel))
+
 
     return result
 
+def extract_feature_2d(file_name, **kwargs):
 
+    mfcc = kwargs.get("mfcc")
+    mel = kwargs.get("mel")
+
+    y, sr = librosa.load(file_name, duration=8, sr=16000, dtype=np.float32)
+    result = []
+
+    if mfcc:
+        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=128, )
+        result = mfccs
+    if mel:
+        mel2d = librosa.feature.melspectrogram(y, sr=sr, n_fft=2048, hop_length=512)
+        mel = librosa.power_to_db(mel2d ** 2)
+        result = mel
+
+    return result
 
 def load_data_ravdess(test_size=0.2):
     X, y = [], []
@@ -109,7 +114,7 @@ def load_data_ravdess(test_size=0.2):
         if emotion not in AVAILABLE_EMOTIONS_RAVDESS:
             continue
         # extract speech features
-        features = extract_feature(file, mfcc=True , chroma=False, mel=False)
+        features = extract_feature_1d(file, mfcc=True , chroma=False, mel=False)
         # add to data
         X.append(features)
         y.append(emotion)
@@ -129,8 +134,9 @@ def load_data_emo(test_size=0.2, **kwargs):
         mfcc = False
         mel = True
 
+    path = 'emo_db/*.wav' if dimension=='1d' else 'emo_db_8sec/*.wav'
 
-    for file in glob.glob("emo_db/*.wav"):
+    for file in glob.glob(path):
         # get the base name of the audio file
         basename = os.path.basename(file)
        
@@ -138,11 +144,13 @@ def load_data_emo(test_size=0.2, **kwargs):
         emotion = emo_db[basename[5]]
     
         # we allow only AVAILABLE_EMOTIONS we set
-        if emotion not in AVAILABLE_EMOTIONS_EMO:
-            continue
+        #if emotion not in AVAILABLE_EMOTIONS_EMO:
+            #continue
         # extract speech features
-        features = extract_feature(file, mfcc=mfcc, mel=mel, dimension=dimension)
-
+        if dimension == '1d':
+            features = extract_feature_1d(file, mfcc=mfcc, mel=mel, dimension=dimension)
+        else:
+            features = extract_feature_2d(file, mfcc=mfcc, mel=mel)
         # add to data
         X.append(features)
         y.append(emotion)
@@ -159,4 +167,4 @@ def escolher_dataset(dataset, dimension, feature):
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mel")
+#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "1d", "mfcc")
