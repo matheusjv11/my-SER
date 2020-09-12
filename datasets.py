@@ -64,6 +64,7 @@ def extract_feature_1d(file_name, **kwargs):
     mel = kwargs.get("mel")
 
     with soundfile.SoundFile(file_name) as sound_file:
+
         X = sound_file.read(dtype="float32")
         sample_rate = sound_file.samplerate
         result = np.array([])
@@ -142,7 +143,7 @@ def load_data_emo(test_size=0.2, **kwargs):
        
         # get the emotion label
         emotion = emo_db[basename[5]]
-    
+
         # we allow only AVAILABLE_EMOTIONS we set
         #if emotion not in AVAILABLE_EMOTIONS_EMO:
             #continue
@@ -167,4 +168,4 @@ def escolher_dataset(dataset, dimension, feature):
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "1d", "mfcc")
+#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mfcc")

@@ -96,15 +96,16 @@ def string2num(y):
     return y1
 
 def loadData():
+
     x_tr, x_t, y_tr, y_t = escolher_dataset('emo', '1d', 'mfcc')
 
     y_tr = string2num(y_tr)
     y_t = string2num(y_t)
-
     x_tr = x_tr.reshape(-1, x_tr.shape[1], 1)
     x_t = x_t.reshape(-1, x_t.shape[1], 1)
     y_tr = to_categorical(y_tr)
     y_t = to_categorical(y_t)
+
 
     return x_tr, y_tr, x_t, y_t
 

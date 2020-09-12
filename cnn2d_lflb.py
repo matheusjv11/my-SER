@@ -2,7 +2,7 @@
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Input, Conv1D, BatchNormalization, MaxPooling1D, LSTM, Dense, Activation, Layer
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPooling2D, LSTM, Dense, Activation, Layer, ConvLSTM2D
 from datasets import escolher_dataset
 from tensorflow.keras.utils import to_categorical, normalize
 import keras.backend as K
@@ -18,34 +18,36 @@ import numpy
 
 
 def emo1d(input_shape, num_classes, args):
-    model = tf.keras.Sequential(name='Emo1D')
+    model = tf.keras.Sequential(name='Emo2D')
 
     # LFLB1
-    model.add(Conv1D(filters=64, kernel_size=(3), strides=1, padding='same', input_shape=input_shape))
+    model.add(Conv2D(filters=64, kernel_size=(3,3), strides=(1,1), padding='same', input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
 
     # LFLB2
-    model.add(Conv1D(filters=64, kernel_size=3, strides=1, padding='same'))
+    model.add(Conv2D(filters=64, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
 
     # LFLB3
-    model.add(Conv1D(filters=128, kernel_size=3, strides=1, padding='same'))
+    model.add(Conv2D(filters=128, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
 
     # LFLB4
-    model.add(Conv1D(filters=128, kernel_size=3, strides=1, padding='same'))
+    model.add(Conv2D(filters=128, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
 
     # LSTM
-    model.add(LSTM(units=args.num_fc))
+    # (Resolver problema de shape do lstm)
+    #model.add(LSTM(units=args.num_fc, input_shape=(251,1)))
+    model.add(ConvLSTM2D(kernel_size=256, filters=0))
 
     # FC
     model.add(Dense(units=num_classes, activation='softmax'))
@@ -101,8 +103,9 @@ def loadData():
     y_tr = string2num(y_tr)
     y_t = string2num(y_t)
 
-    x_tr = x_tr.reshape(-1, x_tr.shape[1], 1)
-    x_t = x_t.reshape(-1, x_t.shape[1], 1)
+    x_tr = x_tr.reshape(-1,x_tr.shape[1:][0], x_tr.shape[1:][1], 1)
+    x_t = x_t.reshape(-1,x_tr.shape[1:][0], x_tr.shape[1:][1], 1)
+
     y_tr = to_categorical(y_tr)
     y_t = to_categorical(y_t)
 
@@ -133,8 +136,6 @@ if __name__ == "__main__":
     args.momentum = 0.9
 
     # define model
-    print(x_tr.shape[1:])
-    quit()
     model = emo1d(input_shape=x_tr.shape[1:], num_classes=7, args=args)
 
     model.summary()
