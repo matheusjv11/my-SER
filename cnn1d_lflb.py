@@ -21,28 +21,32 @@ def emo1d(input_shape, num_classes, args):
     model = tf.keras.Sequential(name='Emo1D')
 
     # LFLB1
-    model.add(Conv1D(filters=64, kernel_size=(3), strides=1, padding='same', input_shape=input_shape))
+    model.add(Conv1D(filters=64, kernel_size=3, strides=1, padding='same', input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    #model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling1D(pool_size=4, strides=4))
 
     # LFLB2
     model.add(Conv1D(filters=64, kernel_size=3, strides=1, padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    #model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling1D(pool_size=4, strides=4))
 
     # LFLB3
     model.add(Conv1D(filters=128, kernel_size=3, strides=1, padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    #model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling1D(pool_size=4, strides=4))
 
     # LFLB4
     model.add(Conv1D(filters=128, kernel_size=3, strides=1, padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling1D(pool_size=2, strides=2))
+    #model.add(MaxPooling1D(pool_size=2, strides=2))
+    model.add(MaxPooling1D(pool_size=4, strides=4))
 
     # LSTM
     model.add(LSTM(units=args.num_fc))
@@ -97,7 +101,10 @@ def string2num(y):
 
 def loadData():
 
-    x_tr, x_t, y_tr, y_t = escolher_dataset('emo', '1d', 'mfcc')
+    x_tr, x_t, y_tr, y_t = escolher_dataset('emo', '1d', 'audio')
+
+    #x_tr = x_tr.reshape(x_tr.shape[0], -1)
+    #x_t = x_t.reshape(x_t.shape[0], -1)
 
     y_tr = string2num(y_tr)
     y_t = string2num(y_t)
@@ -125,7 +132,7 @@ if __name__ == "__main__":
 
     args.num_fc = 64
     # args.batch_size = 32
-    args.batch_size = 6
+    args.batch_size = 1
     # best model will be saved before number of epochs reach this value
     # args.num_epochs = 1500
     args.num_epochs = 300

@@ -2,7 +2,7 @@
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPooling2D, LSTM, Dense, Activation, Layer, ConvLSTM2D
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPooling2D, LSTM, Dense, Activation, Flatten, Reshape
 from datasets import escolher_dataset
 from tensorflow.keras.utils import to_categorical, normalize
 import keras.backend as K
@@ -16,7 +16,8 @@ from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy
 
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def emo1d(input_shape, num_classes, args):
     model = tf.keras.Sequential(name='Emo2D')
 
@@ -30,24 +31,27 @@ def emo1d(input_shape, num_classes, args):
     model.add(Conv2D(filters=64, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
+    model.add(MaxPooling2D(pool_size=(4,4), strides=(4,4)))
 
     # LFLB3
     model.add(Conv2D(filters=128, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
+    model.add(MaxPooling2D(pool_size=(4,4), strides=(4,4)))
 
     # LFLB4
     model.add(Conv2D(filters=128, kernel_size=(3,3), strides=(1,1), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('elu'))
-    model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2)))
+    model.add(MaxPooling2D(pool_size=(4,4), strides=(4,4)))
 
     # LSTM
-    # (Resolver problema de shape do lstm)
-    #model.add(LSTM(units=args.num_fc, input_shape=(251,1)))
-    model.add(ConvLSTM2D(kernel_size=256, filters=0))
+
+    model.add(Reshape((1, 128)))
+    model.add(LSTM(units=256))
+    #model.add(LSTM(units=args.num_fc))
+
+    
 
     # FC
     model.add(Dense(units=num_classes, activation='softmax'))
@@ -127,7 +131,7 @@ if __name__ == "__main__":
 
     args.num_fc = 64
     # args.batch_size = 32
-    args.batch_size = 6
+    args.batch_size = 2
     # best model will be saved before number of epochs reach this value
     # args.num_epochs = 1500
     args.num_epochs = 300

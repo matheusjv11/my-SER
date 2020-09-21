@@ -62,25 +62,23 @@ def extract_feature_1d(file_name, **kwargs):
     """
     mfcc = kwargs.get("mfcc")
     mel = kwargs.get("mel")
+    audio = kwargs.get("audio")
 
-    with soundfile.SoundFile(file_name) as sound_file:
+    y, sr = librosa.load(file_name, duration=8, sr=16000, dtype=np.float32)
+    result = np.array([])
 
-        X = sound_file.read(dtype="float32")
-        sample_rate = sound_file.samplerate
-        result = np.array([])
+    if mfcc:
+        # O np mean é utilizado para transformar a matriz em vetor, tirando a media de cada linha
+        mfccs = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=128).T, axis=0)
+        result = np.hstack((result, mfccs))
 
-        if mfcc:
-            # O np mean é utilizado para transformar a matriz em vetor, tirando a media de cada linha
-            mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=128).T, axis=0)
+    if mel:
+        mel1d = np.mean(librosa.feature.melspectrogram(y, sr=sr).T,axis=0)
+        mel = librosa.power_to_db(mel1d ** 2)
 
-            result = np.hstack((result, mfccs))
-
-        if mel:
-            mel1d = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
-            mel = librosa.power_to_db(mel1d ** 2)
-
-            result = np.hstack((result, mel))
-
+        result = np.hstack((result, mel))
+    if audio:
+        result = np.hstack((result, y))
 
     return result
 
@@ -131,13 +129,19 @@ def load_data_emo(test_size=0.2, **kwargs):
     if feature =='mfcc':
         mfcc=True
         mel=False
-    else:
+        audio=False
+    elif feature =='mel':
         mfcc = False
         mel = True
+        audio = False
+    else:
+        mfcc = False
+        mel = False
+        audio = True
 
-    path = 'emo_db/*.wav' if dimension=='1d' else 'emo_db_8sec/*.wav'
+    #path = 'emo_db/*.wav' if dimension=='1d' else 'emo_db_8sec/*.wav'
 
-    for file in glob.glob(path):
+    for file in glob.glob('emo_db_8sec/*.wav'):
         # get the base name of the audio file
         basename = os.path.basename(file)
        
@@ -149,7 +153,7 @@ def load_data_emo(test_size=0.2, **kwargs):
             #continue
         # extract speech features
         if dimension == '1d':
-            features = extract_feature_1d(file, mfcc=mfcc, mel=mel, dimension=dimension)
+            features = extract_feature_1d(file, mfcc=mfcc, mel=mel, audio=audio, dimension=dimension)
         else:
             features = extract_feature_2d(file, mfcc=mfcc, mel=mel)
         # add to data
@@ -168,4 +172,4 @@ def escolher_dataset(dataset, dimension, feature):
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mfcc")
+#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "1d", "mfcc")
