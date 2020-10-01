@@ -13,8 +13,7 @@ from tensorflow.keras.models import load_model
 import tensorflow as tf
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
-import pandas as pd
-import numpy
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 def emo1d(input_shape, num_classes, args):

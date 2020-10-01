@@ -141,7 +141,7 @@ def load_data_emo(test_size=0.2, **kwargs):
 
     #path = 'emo_db/*.wav' if dimension=='1d' else 'emo_db_8sec/*.wav'
 
-    for file in glob.glob('emo_db_8sec/*.wav'):
+    for file in glob.glob('emo_db_window_8sec/*.wav'):
         # get the base name of the audio file
         basename = os.path.basename(file)
        

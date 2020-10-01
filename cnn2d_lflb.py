@@ -10,11 +10,15 @@ import argparse
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import load_model
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import StratifiedKFold
+from keras.wrappers.scikit_learn import KerasClassifier
 import tensorflow as tf
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score, roc_curve, auc, roc_auc_score
 import pandas as pd
 import numpy
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -139,6 +143,8 @@ if __name__ == "__main__":
     args.decay = 1e-6
     args.momentum = 0.9
 
+
+
     # define model
     model = emo1d(input_shape=x_tr.shape[1:], num_classes=7, args=args)
 
@@ -157,5 +163,39 @@ if __name__ == "__main__":
         print(prediction)"""
     rounded_predictions = np.argmax(predictions, axis=1)
     rounded_true = np.argmax(y_t, axis=1)
-    cm = confusion_matrix(y_true=rounded_true, y_pred=rounded_predictions)
-    print(cm)
+
+    # F1-Score
+    f1_micro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='micro')
+    f1_macro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='macro')
+    print('F1 - Macro: ', f1_macro)
+    print('F1 - Micro: ', f1_micro)
+
+    # ROC-AUC
+    roc_auc = roc_auc_score(y_t, predictions)
+    print('ROC-AUC: ', roc_auc)
+
+    # Matriz de confusão
+    emotions_labels = ['Anger', 'Bordedom', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Neutral']
+    y_labels = [0,1,2,3,4,5,6]
+
+    cm = confusion_matrix(y_true=rounded_true, y_pred=rounded_predictions, labels=y_labels)
+    axes = sns.heatmap(cm, square=True, annot=True, fmt='d', cbar=True, cmap=plt.cm.GnBu)
+
+
+
+    axes.set_xlabel('Verdadeiro')
+    axes.set_ylabel('Predição')
+
+    tick_marks = np.arange(len(emotions_labels)) + 0.5
+
+    axes.set_xticks(tick_marks)
+    axes.set_xticklabels(emotions_labels, rotation=30)
+
+    axes.set_yticks(tick_marks)
+    axes.set_yticklabels(emotions_labels, rotation=0)
+
+    axes.set_title('Matriz de confusão')
+
+    plt.show()
+    axes.figure.savefig('confusion_matrix/cnn2.png', dpi=100)
+
