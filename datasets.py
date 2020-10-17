@@ -30,13 +30,26 @@ emo_db = {
     "N":"N"
 }
 
+# Todas emoções no SAVEE
+savee = {
+    "a": "anger",
+    "d": "disgust",
+    "f": "fear",
+    "h": "happiness",
+    "n": "neutral",
+    "sa": "sadness",
+    "su": "surprise",
+}
 
 # Emoções escolhidas para execução RAVDESS
 AVAILABLE_EMOTIONS_RAVDESS = {
-    "angry",
-    "sad",
     "neutral",
-    "happy"
+    "calm",
+    "happy",
+    "sad",
+    "angry",
+    "fearful",
+    "disgust"
 }
 
 # Emoções escolhidas para execução EMO-DB
@@ -86,13 +99,13 @@ def extract_feature_2d(file_name, **kwargs):
 
     mfcc = kwargs.get("mfcc")
     mel = kwargs.get("mel")
-
     y, sr = librosa.load(file_name, duration=8, sr=16000, dtype=np.float32)
     result = []
 
     if mfcc:
         mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=128, )
         result = mfccs
+
     if mel:
         mel2d = librosa.feature.melspectrogram(y, sr=sr, n_fft=2048, hop_length=512)
         mel = librosa.power_to_db(mel2d ** 2)
@@ -100,9 +113,64 @@ def extract_feature_2d(file_name, **kwargs):
 
     return result
 
-def load_data_ravdess(test_size=0.2):
+
+def load_data_savee(test_size=0.2, **kwargs):
     X, y = [], []
-    for file in glob.glob("data/Actor_*/*.wav"):
+
+    dimension = kwargs.get("dimension")
+    feature = kwargs.get("feature")
+
+    if feature == 'mfcc':
+        mfcc = True
+        mel = False
+        audio = False
+    elif feature == 'mel':
+        mfcc = False
+        mel = True
+        audio = False
+    else:
+        mfcc = False
+        mel = False
+        audio = True
+
+    for file in glob.glob('savee_window_8sec/*.wav'):
+        # get the base name of the audio file
+        basename = os.path.basename(file)
+
+        # get the emotion label
+        emotion = savee[basename.split("_")[0]]
+
+        # extract speech features
+        if dimension == '1d':
+            features = extract_feature_1d(file, mfcc=mfcc, mel=mel, audio=audio, dimension=dimension)
+        else:
+            features = extract_feature_2d(file, mfcc=mfcc, mel=mel)
+        # add to data
+        X.append(features)
+        y.append(emotion)
+    # split the data to training and testing and return it
+    return train_test_split(np.array(X), y, test_size=test_size, random_state=7)
+
+def load_data_ravdess(test_size=0.2, **kwargs):
+    X, y = [], []
+
+    dimension = kwargs.get("dimension")
+    feature = kwargs.get("feature")
+
+    if feature == 'mfcc':
+        mfcc = True
+        mel = False
+        audio = False
+    elif feature == 'mel':
+        mfcc = False
+        mel = True
+        audio = False
+    else:
+        mfcc = False
+        mel = False
+        audio = True
+
+    for file in glob.glob('ravdess_window_8sec/*.wav'):
         # get the base name of the audio file
         basename = os.path.basename(file)
         
@@ -113,7 +181,10 @@ def load_data_ravdess(test_size=0.2):
         if emotion not in AVAILABLE_EMOTIONS_RAVDESS:
             continue
         # extract speech features
-        features = extract_feature_1d(file, mfcc=True , chroma=False, mel=False)
+        if dimension == '1d':
+            features = extract_feature_1d(file, mfcc=mfcc, mel=mel, audio=audio, dimension=dimension)
+        else:
+            features = extract_feature_2d(file, mfcc=mfcc, mel=mel)
         # add to data
         X.append(features)
         y.append(emotion)
@@ -159,17 +230,21 @@ def load_data_emo(test_size=0.2, **kwargs):
         # add to data
         X.append(features)
         y.append(emotion)
+
     # split the data to training and testing and return it
-    return train_test_split(np.array(X), y, test_size=test_size, random_state=7)
+    return train_test_split(np.array(X), y, test_size=test_size, stratify=y) # NORMAL
+    #return np.array(X), y # KFOLD
 
 
 def escolher_dataset(dataset, dimension, feature):
     if dataset == "emo":
         return load_data_emo(dimension=dimension, feature=feature)
     elif dataset == "ravdess":
-        return load_data_ravdess()
+        return load_data_ravdess(dimension=dimension, feature=feature)
+    elif dataset == "savee":
+        return load_data_savee(dimension=dimension, feature=feature)
     else:
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "1d", "mfcc")
+#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mel")

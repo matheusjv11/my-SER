@@ -1,8 +1,9 @@
 from tensorflow.keras.utils import to_categorical
 import numpy as np
-from sklearn import svm, metrics
+from sklearn import metrics
+from sklearn.ensemble import RandomForestClassifier
 from datasets import escolher_dataset
-from sklearn.metrics import confusion_matrix, f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     x_tr, y_tr, x_t, y_t = loadData()
 
     # Modelo SVM
-    model = svm.SVC(kernel='linear')
+    model = RandomForestClassifier(max_depth=100, random_state=0)
 
     # Treinando o modelo
     model.fit(x_tr, y_tr)
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     print('F1 - Micro: ', f1_micro)
 
     # ROC-AUC
-    #roc_auc = roc_auc_score(y_t, pred) ta dando erro
+    #roc_auc = roc_auc_score(y_t, pred)
     #print('ROC-AUC: ', roc_auc)
     #
     # Matriz de confusão
@@ -102,4 +103,4 @@ if __name__ == '__main__':
     axes.set_title('Matriz de confusão')
 
     plt.show()
-    axes.figure.savefig('confusion_matrix/svm.png', dpi=100)
+    axes.figure.savefig('confusion_matrix/random_forest.png', dpi=100)
