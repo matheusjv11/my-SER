@@ -103,13 +103,13 @@ def extract_feature_2d(file_name, **kwargs):
     result = []
 
     if mfcc:
-        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=128, )
+        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=128 )
         result = mfccs
 
     if mel:
         mel2d = librosa.feature.melspectrogram(y, sr=sr, n_fft=2048, hop_length=512)
-        mel = librosa.power_to_db(mel2d ** 2)
-        result = mel
+        logmel = librosa.power_to_db(mel2d, ref=np.max)
+        result = logmel
 
     return result
 
@@ -119,6 +119,7 @@ def load_data_savee(test_size=0.2, **kwargs):
 
     dimension = kwargs.get("dimension")
     feature = kwargs.get("feature")
+    window = kwargs.get("window")
 
     if feature == 'mfcc':
         mfcc = True
@@ -133,7 +134,12 @@ def load_data_savee(test_size=0.2, **kwargs):
         mel = False
         audio = True
 
-    for file in glob.glob('savee_window_8sec/*.wav'):
+    if window == True:
+        path = 'savee_window_8sec/*.wav'
+    else:
+        path = "savee_8sec/*.wav"
+
+    for file in glob.glob(path):
         # get the base name of the audio file
         basename = os.path.basename(file)
 
@@ -156,6 +162,7 @@ def load_data_ravdess(test_size=0.2, **kwargs):
 
     dimension = kwargs.get("dimension")
     feature = kwargs.get("feature")
+    window = kwargs.get("window")
 
     if feature == 'mfcc':
         mfcc = True
@@ -170,7 +177,12 @@ def load_data_ravdess(test_size=0.2, **kwargs):
         mel = False
         audio = True
 
-    for file in glob.glob('ravdess_window_8sec/*.wav'):
+    if window == True:
+        path = 'ravdess_window_8sec/*.wav'
+    else:
+        path = "ravdess_8sec/*.wav"
+
+    for file in glob.glob(path):
         # get the base name of the audio file
         basename = os.path.basename(file)
         
@@ -196,6 +208,7 @@ def load_data_emo(test_size=0.2, **kwargs):
 
     dimension = kwargs.get("dimension")
     feature = kwargs.get("feature")
+    window = kwargs.get("window")
 
     if feature =='mfcc':
         mfcc=True
@@ -210,9 +223,12 @@ def load_data_emo(test_size=0.2, **kwargs):
         mel = False
         audio = True
 
-    #path = 'emo_db/*.wav' if dimension=='1d' else 'emo_db_8sec/*.wav'
+    if window == True:
+        path = 'emo_db_window_8sec/*.wav'
+    else:
+        path = "emo_db_8sec/*.wav"
 
-    for file in glob.glob('emo_db_window_8sec/*.wav'):
+    for file in glob.glob(path):
         # get the base name of the audio file
         basename = os.path.basename(file)
        
@@ -236,15 +252,15 @@ def load_data_emo(test_size=0.2, **kwargs):
     #return np.array(X), y # KFOLD
 
 
-def escolher_dataset(dataset, dimension, feature):
+def escolher_dataset(dataset, dimension, feature, window):
     if dataset == "emo":
-        return load_data_emo(dimension=dimension, feature=feature)
+        return load_data_emo(dimension=dimension, feature=feature, window=window)
     elif dataset == "ravdess":
-        return load_data_ravdess(dimension=dimension, feature=feature)
+        return load_data_ravdess(dimension=dimension, feature=feature, window=window)
     elif dataset == "savee":
-        return load_data_savee(dimension=dimension, feature=feature)
+        return load_data_savee(dimension=dimension, feature=feature, window=window)
     else:
         raise NotImplementedError("Dataset não foi selecionado")
 
 
-#x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mel")
+x_tr, x_t, y_tr, y_t  = escolher_dataset("emo", "2d", "mfcc", True)

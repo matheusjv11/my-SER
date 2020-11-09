@@ -1,9 +1,11 @@
 import librosa
+import librosa.display
 from scipy.io.wavfile import write
 import glob
 import os
 import soundfile
 import numpy as np
+import matplotlib.pyplot as plt
 
 emo_db = {
         "W": "Anger(W)",
@@ -487,15 +489,77 @@ def classes_savee():
     result_porcentagem = dict(zip(unique_window, porcentagem))
     print(result_porcentagem)
 
+def plot_mfcc(file):
+        y, sr = librosa.load(file, duration=8, sr=16000, dtype=np.float32)
+        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+
+        basename = os.path.basename(file)
+        emotion = emo_db[basename[5]]
+        print(emotion)
+
+        librosa.display.specshow(mfccs, sr=1600, hop_length=512)
+        plt.xlabel("Tempo")
+        plt.ylabel("MFCC")
+        plt.colorbar()
+        path = "plots/mfcc_" + emotion + str(basename)+ ".png"
+        plt.savefig(path, dpi=100)
+        plt.show()
+
+
+
+
+
+def plot_normal(file, nome_plot):
+
+        y, sr = librosa.load(file, duration=8, sr=16000, dtype=np.float32)
+        #basename = os.path.basename(file)
+        #emotion = emo_db[basename[5]]
+        #print(emotion)
+        path = "plots/normal_" + nome_plot + "_.png"
+        grafico=librosa.display.waveplot(y, sr=sr)
+
+        plt.xlabel("Tempo")
+        plt.ylabel("Amplitude")
+        print(len(y), nome_plot)
+        #plt.savefig(path, dpi=100)
+        #plt.show()
+
+
+def plot_mel(file):
+
+    y, sr = librosa.load(file, duration=8, sr=16000, dtype=np.float32)
+    mel = librosa.filters.mel(y, n_fft=2048, n_mels=128)
+
+    basename = os.path.basename(file)
+    emotion = emo_db[basename[5]]
+    print(emotion)
+    librosa.display.specshow(mel, sr=sr, x_axis="Linear")
+    #librosa.display.specshow(mel)
+    plt.xlabel("Tempo")
+    plt.ylabel("Hz")
+    plt.colorbar(format="%+2.f")
+    path = "plots/mel_" + emotion +str(basename)+".png"
+    plt.savefig(path, dpi=100)
+    plt.show()
+
+def plot_audio():
+    for file in glob.glob("emo_db_window/*"):
+        basename = os.path.basename(file)
+        #emotion = emo_db[basename[5]]
+        if "03a05Wa" in basename:
+            #plot_mfcc(file)
+            plot_normal(file, basename)
+            #plot_mel(file)
+
+
 if __name__ == '__main__':
-    matrix1 = []
-    matrix2 = [[1, 1, 1], [1, 1, 1]]
-    print(len(matrix2))
-    if len(matrix1):
-        print("pimba")
-    else:
-        print("pooxa")
-    print(matrix1)
+    f = open("results.txt", "w")
+    for i in range(3):
+        f.write(str(i)+"\n")
+
+    f.close()
+
+    #plot_audio()
     # Essas funções modificação os audios
     #janela_deslizante()
     #emodb_to_8sec()
@@ -508,6 +572,7 @@ if __name__ == '__main__':
     #classes_savee()
     #duration_analisys_ravdess()
     #duration_analisys_savee()
+    #duration_analisys_emo()
     """""
     audios = []
     audio_seconds = np.array([])

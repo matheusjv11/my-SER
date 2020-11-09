@@ -12,7 +12,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import load_model
 from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.model_selection import StratifiedKFold, KFold, LeaveOneOut
 from keras.wrappers.scikit_learn import KerasClassifier
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, f1_score, roc_curve, auc, roc_auc_score, accuracy_score
@@ -162,80 +162,92 @@ if __name__ == "__main__":
     x, y= loadData()
 
     kf = KFold(5, shuffle=True)
+    loo = LeaveOneOut()
+
     score_final = []
     final_pred = []
     final_accuracy = np.array([])
     final_cm = []
     fold = 0
 
-    x_shape = x.shape[1:]
+    kfold = True
 
-    for train, test in kf.split(x, y):
-        fold+=1
-        print("Fold #{}".format(fold))
+    crossval="kfold" if kfold else "loso"
 
-        x_train = x[train]
-        y_train = y[train]
-        x_test = x[test]
-        y_test = y[test]
+    if kfold:
+        # K-FOLD
+        for train, test in kf.split(x, y):
+            fold+=1
+            print("Fold #{}".format(fold))
 
-        # define model
-        model = cnn2d(input_shape=x.shape[1:], num_classes=7, args=args)
+            x_train = x[train]
+            y_train = y[train]
+            x_test = x[test]
+            y_test = y[test]
 
-        # train model
-        es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
-        mc = ModelCheckpoint('best_model_cnn2d.h5', monitor='val_categorical_accuracy',
-                             mode='max', verbose=1, save_best_only=True)
-        history = model.fit(x_train, y_train, epochs=args.num_epochs, batch_size=args.batch_size,
-                            validation_data=(x_test, y_test),
-                            callbacks=[es, mc])
+            # define model
+            model = cnn2d(input_shape=x.shape[1:], num_classes=7, args=args)
 
-        # test model
-        saved_model = load_model('best_model_cnn2d.h5')
-        score = saved_model.evaluate(x_test, y_test, batch_size=20)
-        print(score)
-        score_final.append(score)
+            # train model
+            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
+            mc = ModelCheckpoint('best_model_cnn2d.h5', monitor='val_categorical_accuracy',
+                                 mode='max', verbose=1, save_best_only=True)
+            history = model.fit(x_train, y_train, epochs=args.num_epochs, batch_size=args.batch_size,
+                                validation_data=(x_test, y_test),
+                                callbacks=[es, mc])
 
-        #y_t = [numpy.argmax(y, axis=None, out=None) for y in y_test]
+            # test model
+            saved_model = load_model('best_model_cnn2d.h5')
+            score = saved_model.evaluate(x_test, y_test, batch_size=20)
+            print(score)
+            score_final.append(score)
+
+            #y_t = [numpy.argmax(y, axis=None, out=None) for y in y_test]
 
 
-        predictions = model.predict(x_test, batch_size=10, verbose=0)
-        rounded_predictions = np.argmax(predictions, axis=1)
-        rounded_true = np.argmax(y_test, axis=1)
-        accuracy = accuracy_score(rounded_true, rounded_predictions)
-        print("Accuracy score:", accuracy)
-        final_accuracy = np.append(final_accuracy, accuracy)
-        # F1-Score
-        f1_micro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='micro')
-        f1_macro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='macro')
-        print('F1 - Macro: ', f1_macro)
-        print('F1 - Micro: ', f1_micro)
+            predictions = model.predict(x_test, batch_size=10, verbose=0)
+            rounded_predictions = np.argmax(predictions, axis=1)
+            rounded_true = np.argmax(y_test, axis=1)
+            accuracy = accuracy_score(rounded_true, rounded_predictions)
+            print("Accuracy score:", accuracy)
+            final_accuracy = np.append(final_accuracy, accuracy)
+            # F1-Score
+            f1_micro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='micro')
+            f1_macro = f1_score(y_true=rounded_true, y_pred=rounded_predictions, average='macro')
+            print('F1 - Macro: ', f1_macro)
+            print('F1 - Micro: ', f1_micro)
 
-        # ROC-AUC
-        roc_auc = roc_auc_score(y_test, predictions)
-        print('ROC-AUC: ', roc_auc)
+            # ROC-AUC
+            roc_auc = roc_auc_score(y_test, predictions)
+            print('ROC-AUC: ', roc_auc)
 
-        # Matriz de confusão
-        emotions_labels = []
+            # Matriz de confusão
+            emotions_labels = []
 
-        if emo_db:
-            emotions_labels = ['Anger', 'Bordedom', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Neutral']
-        elif ravdess:
-            emotions_labels = ["neutral", "calm", "happy", "sad", "angry", "fearful", "disgust"]
-        elif savee:
-            emotions_labels = ["anger", "disgust", "fear", "happiness", "neutral", "sadness", "surprise"]
+            if emo_db:
+                emotions_labels = ['Anger', 'Bordedom', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Neutral']
+            elif ravdess:
+                emotions_labels = ["neutral", "calm", "happy", "sad", "angry", "fearful", "disgust"]
+            elif savee:
+                emotions_labels = ["anger", "disgust", "fear", "happiness", "neutral", "sadness", "surprise"]
 
-        y_labels = [0, 1, 2, 3, 4, 5, 6]
+            y_labels = [0, 1, 2, 3, 4, 5, 6]
 
-        cm = confusion_matrix(y_true=rounded_true, y_pred=rounded_predictions, labels=y_labels)
-        print(cm)
-        if len(final_cm) > 0:
-            for i in range(len(final_cm)):
-                for j in range(len(final_cm[i])):
-                    final_cm[i][j] = final_cm[i][j] + cm[i][j]
-        else:
-            final_cm = cm
+            cm = confusion_matrix(y_true=rounded_true, y_pred=rounded_predictions, labels=y_labels)
+            print(cm)
+            if len(final_cm) > 0:
+                for i in range(len(final_cm)):
+                    for j in range(len(final_cm[i])):
+                        final_cm[i][j] = final_cm[i][j] + cm[i][j]
+            else:
+                final_cm = cm
+    else:
+        #LEAVE-ONE-OUT
+        for train_index, test_index in loo.split(x):
+            x_train, x_test = x[train_index], x[test_index]
+            y_train, y_test = y[train_index], y[test_index]
 
+            print("abublé")
 
 
 
@@ -263,9 +275,9 @@ if __name__ == "__main__":
 
     path = ''
     if emo_db:
-        path = 'confusion_matrix/cnn2d_kfold_' + 'emo' + '.png'
+        path = 'confusion_matrix/cnn2d_crossval_' + crossval + '_emo' + '.png'
     elif ravdess:
-        path = 'confusion_matrix/cnn2d_kfold_' + 'ravdess' + '.png'
+        path = 'confusion_matrix/cnn2d_crossval_' + crossval + '_ravdess' + '.png'
     elif savee:
-        path = 'confusion_matrix/cnn2d_kfold_' + 'savee' + '.png'
+        path = 'confusion_matrix/cnn2d_crossval_' + crossval + '_savee' + '.png'
     axes.figure.savefig(path, dpi=100)
